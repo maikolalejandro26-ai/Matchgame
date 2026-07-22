@@ -941,20 +941,75 @@ window.abrirModalSuperLike=function(uid){if(userActual.puntos<50)return mostrarT
 window.enviarSuperLike=async function(){if(!uidLikePendiente||userActual.puntos<50)return;userActual.puntos-=50;esSuperLike=true;const msg=document.getElementById('mensajeLike').value.trim();document.getElementById('modalMensajeLike').classList.add('hidden');const overlay=document.createElement('div');overlay.className='superlike-overlay';document.body.appendChild(overlay);setTimeout(()=>overlay.remove(),800);for(let i=0;i<20;i++){const s=document.createElement('span');s.innerText='⭐';s.className='particula-amor';s.style.left=Math.random()*80+10+'%';s.style.bottom='15%';s.style.fontSize='30px';s.style.animationDelay=i*0.05+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),1500);}await darLikeDirecto(uidLikePendiente,msg?`⭐ SUPER LIKE: ${msg}`:'⭐ SUPER LIKE!');uidLikePendiente=null;esSuperLike=false;await guardarTodo();actualizarUI();};
 
 // ==================== AUTENTICACIÓN (CORREGIDA) ====================
-window.registrar=async function(){
-  if(!isOnline)return mostrarToast('Sin conexión a internet','error');
-  const u=document.getElementById('regUser').value.trim();const email=document.getElementById('regEmail').value.trim();
-  if(!u)return mostrarToast('Pon un nombre de usuario','warning');if(!email)return mostrarToast('Pon un email','warning');if(!email.includes('@')||!email.includes('.'))return mostrarToast('Email inválido','error');
-  await cargarTodosUsuarios();if(usuarios.find(x=>x.user===u))return mostrarToast('Ese usuario ya existe','warning');
-  if(document.getElementById('regPass').value.length<6)return mostrarToast('Contraseña muy corta','warning');
-  try{
-    const cred=await createUserWithEmailAndPassword(auth,email,document.getElementById('regPass').value);
-    codigoVerificacionActual=Math.floor(100000+Math.random()*900000).toString();
-    const nuevoUsuario={uid:cred.user.uid,user:u,email:email,edad:document.getElementById('regEdad').value,genero:document.getElementById('regGenero').value,ciudad:document.getElementById('regCiudad').value,bio:document.getElementById('regBio').value,intereses:[],etiquetas:[],preguntas:{},puntos:0,xp:0,foto:'',fotosGaleria:[],conectado:true,estado:'online',likesEnviados:[],pasadosEnviados:[],likesRecibidos:[],matches:[],chats:{},chatsNoLeidos:{},chatsFijados:[],victorias:0,derrotas:0,insignias:[],verificado:false,emailVerificado:false,codigoVerificacion:codigoVerificacionActual,marco:'',colorNombre:'',fondo:null,efecto:null,mascota:'pollito',animacionPerfil:false,regalosEnviados:0,stats:{},bloqueados:[],ubicacion:ubicacionUsuario,racha:1,ultimaConexion:new Date().toDateString(),modoOscuro:false,encuestas:{},ruletaUsada:'',minijuegosRestantes:2,ultimaRuleta:'',rachaVictorias:{},ultimaDesconexion:''};
-    await setDoc(doc(db,"usuarios",cred.user.uid),nuevoUsuario);userActual=nuevoUsuario;window.userActual=userActual;localStorage.setItem('mg_uid',userActual.uid);
-    mostrarPagina('app');actualizarUI();mostrar('descubrir');actualizarMascota();
-    mostrarToast(`Cuenta creada. Código: ${codigoVerificacionActual}`,'success');
-  }catch(err){mostrarToast(err.message,'error');}
+window.registrar = async function() {
+  console.log('🟢 Función registrar ejecutada');
+  if (!isOnline) {
+    mostrarToast('Sin conexión a internet', 'error');
+    return;
+  }
+  
+  const u = document.getElementById('regUser')?.value?.trim();
+  const email = document.getElementById('regEmail')?.value?.trim();
+  const pass = document.getElementById('regPass')?.value;
+  
+  console.log('Datos:', { u, email, passLength: pass?.length });
+  
+  if (!u) { mostrarToast('Pon un nombre de usuario', 'warning'); return; }
+  if (!email) { mostrarToast('Pon un email para verificación', 'warning'); return; }
+  if (!email.includes('@') || !email.includes('.')) { mostrarToast('Email inválido', 'error'); return; }
+  if (!pass || pass.length < 6) { mostrarToast('La contraseña debe tener al menos 6 caracteres', 'warning'); return; }
+  
+  await cargarTodosUsuarios();
+  
+  if (usuarios.find(x => x.user === u)) {
+    mostrarToast('Ese usuario ya existe', 'warning');
+    return;
+  }
+  
+  try {
+    mostrarToast('Creando cuenta...', 'info');
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    codigoVerificacionActual = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    const nuevoUsuario = { 
+      uid: cred.user.uid, user: u, email: email,
+      edad: document.getElementById('regEdad')?.value || '',
+      genero: document.getElementById('regGenero')?.value || '',
+      ciudad: document.getElementById('regCiudad')?.value || '',
+      bio: document.getElementById('regBio')?.value || '',
+      intereses: [], etiquetas:[], preguntas:{}, puntos: 0, xp:0, foto: '', fotosGaleria: [], 
+      conectado: true, estado:'online', likesEnviados: [], pasadosEnviados: [], likesRecibidos: [], 
+      matches: [], chats: {}, chatsNoLeidos: {}, chatsFijados:[], victorias: 0, derrotas: 0, 
+      insignias: [], verificado: false, emailVerificado: false, codigoVerificacion: codigoVerificacionActual,
+      marco: '', colorNombre: '', fondo: null, efecto: null, mascota: 'pollito', animacionPerfil: false, 
+      regalosEnviados: 0, stats: {}, bloqueados: [], ubicacion: ubicacionUsuario, racha:1, 
+      ultimaConexion: new Date().toDateString(), modoOscuro: false, encuestas: {}, 
+      ruletaUsada:'', minijuegosRestantes:2, ultimaRuleta:'', rachaVictorias:{}, ultimaDesconexion:'' 
+    };
+    
+    await setDoc(doc(db, "usuarios", cred.user.uid), nuevoUsuario);
+    userActual = nuevoUsuario; 
+    window.userActual = userActual; 
+    localStorage.setItem('mg_uid', userActual.uid);
+    
+    mostrarPagina('app'); 
+    actualizarUI(); 
+    mostrar('descubrir'); 
+    actualizarMascota();
+    mostrarToast(`✅ Cuenta creada. Código: ${codigoVerificacionActual}`, 'success');
+    
+  } catch(err) {
+    console.error('Error en registro:', err);
+    if (err.code === 'auth/email-already-in-use') {
+      mostrarToast('Este email ya está registrado', 'error');
+    } else if (err.code === 'auth/invalid-email') {
+      mostrarToast('Email inválido', 'error');
+    } else if (err.code === 'auth/weak-password') {
+      mostrarToast('Contraseña muy débil (mín. 6 caracteres)', 'warning');
+    } else {
+      mostrarToast('Error: ' + err.message, 'error');
+    }
+  }
 };
 
 window.login=async function(){
