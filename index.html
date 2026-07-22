@@ -1084,6 +1084,25 @@ window.cambiarEstado=function(){document.getElementById('menuPerfil')?.classList
 window.guardarEstado=async function(){userActual.estado=document.getElementById('selectEstado').value;await guardarTodo();cargarPerfil();document.getElementById('modalEstado').classList.add('hidden');mostrarToast('Estado actualizado','success');};
 window.cerrarModalEstado=function(){document.getElementById('modalEstado').classList.add('hidden');};
 
+//CERRAR CESIÓN 
+window.logout = async function() {
+  try {
+    if (userActual) {
+      userActual.conectado = false;
+      await setDoc(doc(db, "usuarios", userActual.uid), { conectado: false }, { merge: true });
+    }
+  } catch(e) {
+    console.log('Error al guardar estado:', e);
+  }
+  await signOut(auth);
+  userActual = null;
+  window.userActual = null;
+  localStorage.removeItem('mg_uid');
+  document.getElementById('mascotaVirtual')?.classList.add('hidden');
+  mostrarPagina('login');
+  mostrarToast('Sesión cerrada', 'info');
+};
+  
 // MENÚ CHAT
 window.toggleMenuChat=function(){const m=document.getElementById('menuChatFlotante');if(m)m.classList.toggle('hidden');};
 document.addEventListener('click',function(e){const m=document.getElementById('menuChatFlotante');const b=e.target.closest('[onclick*="toggleMenuChat"]');if(m&&!m.classList.contains('hidden')&&!b&&!m.contains(e.target)){m.classList.add('hidden');}});
