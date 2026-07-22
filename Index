@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MatchGame</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/feather-icons"></script>
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<div id="offlineBanner" class="offline-banner">Sin conexión a internet</div>
+<div id="loadingOverlay" class="loading-overlay hidden"><div class="logo-latido">💖</div><div class="loading-texto">Cargando...</div></div>
+<div id="toastContainer" class="toast-container"></div>
+<div id="mascotaVirtual" class="mascota-virtual hidden" onclick="clickMascota()">🐣</div>
+<div id="mascotaDialogo" class="mascota-dialogo hidden"></div>
+
+<div class="container" id="mainContainer">
+  <div id="pullIndicator" class="pull-indicator"><span class="spinner"></span> Cargando...</div>
+  
+  <!-- LOGIN -->
+  <div id="paginaLogin" style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;padding:20px;">
+    <div style="text-align:center;margin-bottom:16px;"><div style="font-size:40px;">💖</div><h1>MatchGame</h1></div>
+    <div class="card" style="width:100%;max-width:340px;border-radius:12px;padding:20px;">
+      <h2 style="text-align:center;">Iniciar Sesión</h2>
+      <input id="logUser" placeholder="Usuario o Email">
+      <input id="logPass" type="password" placeholder="Contraseña">
+      <button class="btn-primario" onclick="login()">Entrar</button>
+      <button class="btn-sec" onclick="mostrarPagina('registro')">¿No tienes cuenta? Regístrate</button>
+      <button class="btn-sec" onclick="mostrarPagina('recuperar')" style="font-size:12px;">¿Olvidaste tu contraseña?</button>
+    </div>
+  </div>
+  
+  <!-- REGISTRO -->
+  <div id="paginaRegistro" class="hidden" style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;padding:20px;">
+    <div style="text-align:center;margin-bottom:12px;"><div style="font-size:36px;">✨</div><h1>Crear Cuenta</h1></div>
+    <div class="card" style="width:100%;max-width:340px;border-radius:12px;padding:20px;">
+      <input id="regUser" placeholder="Nombre de Usuario">
+      <input id="regEmail" type="email" placeholder="Email (para verificación)">
+      <input id="regPass" type="password" placeholder="Contraseña (mín. 6)">
+      <input id="regEdad" type="number" placeholder="Edad">
+      <select id="regGenero"><option value="">Género</option><option>Hombre</option><option>Mujer</option><option>Otro</option></select>
+      <input id="regCiudad" placeholder="Ciudad">
+      <textarea id="regBio" placeholder="Bio" rows="2"></textarea>
+      <button class="btn-primario" onclick="registrar()">Registrarse</button>
+      <button class="btn-sec" onclick="mostrarPagina('login')">Ya tengo cuenta</button>
+    </div>
+  </div>
+  
+  <!-- RECUPERAR -->
+  <div id="paginaRecuperar" class="hidden" style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;padding:20px;">
+    <div class="card" style="width:100%;max-width:340px;border-radius:12px;padding:20px;">
+      <h2 style="text-align:center;">Recuperar Contraseña</h2>
+      <p style="text-align:center;margin-bottom:10px;color:var(--text-secondary);font-size:13px;">Ingresa tu email registrado</p>
+      <input id="recupEmail" type="email" placeholder="Email">
+      <button class="btn-primario" onclick="recuperarContrasena()">Enviar instrucciones</button>
+      <button class="btn-sec" onclick="mostrarPagina('login')">Volver al login</button>
+    </div>
+  </div>
+  
+  <!-- APP -->
+  <div id="paginaApp" class="hidden">
+    
+    <!-- DESCUBRIR -->
+    <div id="descubrir" class="card" style="padding-bottom:80px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <h2><i data-feather="heart" class="icon-btn"></i> Descubrir</h2>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="btn-sec" onclick="abrirModalFiltros()" style="width:auto;padding:5px 8px;min-height:30px;font-size:12px;">Filtrar</button>
+          <button class="btn-sec" onclick="toggleModoOscuro()" style="width:auto;padding:5px 8px;min-height:30px;font-size:12px;" id="btnModoOscuro">🌙</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button id="btnTabDescubrir" class="btn-primario" onclick="cambiarModoDescubrir('descubrir')" style="flex:1;font-size:13px;">🔍 Descubrir</button>
+        <button id="btnTabSolicitudes" class="btn-sec" onclick="cambiarModoDescubrir('solicitudes')" style="flex:1;font-size:13px;">📊 Solicitudes <span id="badgeSolicitudes" class="badge-nav hidden" style="position:static;">0</span></button>
+      </div>
+      <div id="filtrosActivosContainer" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;"></div>
+      <div id="modoDescubrir"><div id="listaUsuarios"></div><div id="solicitudes" class="hidden"><h3>Solicitudes</h3><div id="areaSolicitudes"></div></div></div>
+    </div>
+    
+    <!-- CHATS -->
+    <div id="chats" class="card hidden"><h2><i data-feather="message-circle" class="icon-btn"></i> Chats</h2><div id="listaChats"></div>
+      <div id="areaChat" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--chat-bg);z-index:150;display:flex;flex-direction:column;">
+        <div class="chat-header-wa"><button class="btn-volver" onclick="cerrarChat()"><i data-feather="arrow-left" class="icon-nav"></i></button><div class="avatar avatar-sm" id="avatarChat" onclick="verPerfilDesdeChat()"></div><div class="chat-info" onclick="verPerfilDesdeChat()"><h3 id="chatCon"></h3><small id="estadoChat"></small><small id="indicadorEscribiendo" class="hidden" style="color:var(--primary);font-style:italic;">escribiendo...</small></div><button onclick="toggleFijarChat()" style="width:auto;min-height:auto;padding:4px;background:none;font-size:16px;" id="btnFijarChat">📌</button></div>
+        <div class="chat-box-wa" id="chatBoxWa"><div id="mensajesChat"></div></div>
+        <div id="busquedaChatDiv" class="hidden" style="position:sticky;top:0;background:var(--card-bg);padding:6px 10px;z-index:5;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center;"><input id="busquedaInput" placeholder="Buscar..." oninput="buscarEnChat()" style="flex:1;margin:0;padding:6px 10px;min-height:auto;font-size:13px;"><button onclick="cerrarBusqueda()" class="btn-sec" style="width:auto;min-height:auto;padding:4px 8px;font-size:12px;">✕</button></div>
+        <div id="invitacionJuego" class="hidden" style="background:#fff3cd;border:1px solid #ffc107;padding:10px;margin:0 6px;border-radius:8px;text-align:center;"><p id="textoInvitacion"></p><p id="contadorInvitacion"></p><div style="display:flex;gap:6px;justify-content:center;"><button class="btn-aceptar" onclick="aceptarInvitacion()" style="width:auto;padding:6px 12px;font-size:12px;">Aceptar</button><button class="btn-rechazar" onclick="rechazarInvitacion()" style="width:auto;padding:6px 12px;font-size:12px;">Rechazar</button></div></div>
+        <div class="chat-input-wa">
+          <input id="msgInput" placeholder="Mensaje" onkeypress="if(event.key==='Enter')enviarMsg()">
+          <button onclick="toggleMenuChat()" style="width:34px;height:34px;min-height:auto;background:var(--primary);color:white;font-size:18px;font-weight:700;">+</button>
+          <button onclick="enviarMsg()"><i data-feather="send" style="width:16px;height:16px;"></i></button>
+        </div>
+        <div id="menuChatFlotante" class="menu-chat-flotante hidden">
+          <button onclick="document.getElementById('inputFotoChat').click();toggleMenuChat();">📷 Enviar foto</button>
+          <button onclick="iniciarGrabacion();toggleMenuChat();">🎤 Nota de voz</button>
+          <button onclick="abrirTiendaDesdeChat();toggleMenuChat();">🎁 Enviar regalo</button>
+          <button onclick="enviarRegaloSorpresa();toggleMenuChat();">🎪 Regalo sorpresa</button>
+          <button onclick="invitarJuego('gato');toggleMenuChat();">🐱 Gato</button>
+          <button onclick="invitarJuego('adivina');toggleMenuChat();">🔢 Adivina</button>
+          <button onclick="invitarJuego('ahorcado');toggleMenuChat();">💀 Ahorcado</button>
+          <button onclick="invitarJuego('ppt');toggleMenuChat();">✊ PPT</button>
+          <button onclick="crearEncuesta();toggleMenuChat();">📊 Encuesta</button>
+          <button onclick="abrirBusqueda();toggleMenuChat();">🔍 Buscar</button>
+          <button onclick="verGaleriaChat();toggleMenuChat();">🖼️ Fotos</button>
+          <button onclick="verStatsChat();toggleMenuChat();">📈 Stats</button>
+        </div>
+        <input type="file" id="inputFotoChat" accept="image/*" onchange="enviarFotoChat(event)" style="display:none;">
+      </div>
+    </div>
+    
+    <!-- JUEGOS -->
+    <div id="juegos" class="card hidden" style="padding-bottom:80px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><h2><i data-feather="grid" class="icon-btn"></i> Juegos</h2><div style="display:flex;gap:6px;align-items:center;"><span class="racha-indicador" id="rachaIndicador" style="display:none;">🔥 Día <span id="rachaDias">1</span></span><button class="btn-tienda" onclick="abrirTienda()" style="padding:5px 8px;min-height:30px;font-size:12px;">Tienda</button><div class="puntos-en-linea"><span id="puntosUser">0</span> pts</div></div></div>
+      <div id="nivelContainer" style="background:var(--card-bg);border-radius:10px;padding:10px;margin-bottom:10px;text-align:center;"><p style="font-weight:700;">🏅 Nivel <span id="nivelActual">1</span> - <span id="nivelTitulo">Novato</span></p><div class="nivel-barra"><div class="nivel-progreso" id="nivelProgreso" style="width:0%"></div></div><small><span id="xpActual">0</span> / <span id="xpNecesaria">100</span> XP</small></div>
+      <div class="misiones-dia" id="misionesDia"></div>
+      <div style="background:var(--card-bg);border-radius:10px;padding:10px;margin:10px 0;text-align:center;"><h4>🎰 RULETA DIARIA</h4><div class="ruleta-container"><div id="ruletaPremio" style="font-size:50px;">🎰</div><p id="ruletaTexto" style="margin:6px 0;">¡Gira y gana!</p></div><button onclick="girarRuleta()" class="btn-tienda" style="width:auto;margin:0 auto;font-size:12px;">🎰 Girar (1 gratis/día)</button><button onclick="girarRuletaPago()" class="btn-sec" style="width:auto;margin:3px auto;font-size:11px;">🔄 Girar por 15pts</button></div>
+      <div style="background:var(--card-bg);border-radius:10px;padding:10px;margin:10px 0;"><h4>⚡ MINIJUEGOS <small style="color:var(--text-secondary);">(Rotan cada 2h)</small></h4><div id="minijuegosContainer"></div><div id="minijuegosTimer" style="text-align:center;font-size:10px;color:var(--text-secondary);margin-top:3px;"></div></div>
+      <h3>🏆 Top 5 Ranking</h3><div id="listaRankingTop"></div>
+      <div class="juegos-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:6px;">
+        <div class="juego-card" onclick="jugarGato()">🐱<h3>Gato</h3>+15</div>
+        <div class="juego-card" onclick="jugarAdivina()">🔢<h3>Adivina</h3>+20</div>
+        <div class="juego-card" onclick="jugarAhorcado()">💀<h3>Ahorcado</h3>+25</div>
+        <div class="juego-card" onclick="jugarMemoria()">🧠<h3>Memoria</h3>+20</div>
+      </div>
+    </div>
+    
+    <!-- PERFIL -->
+    <div id="perfil" class="card hidden" style="padding-bottom:80px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2><i data-feather="user" class="icon-btn"></i> Mi Perfil</h2>
+        <div style="display:flex;gap:6px;">
+          <button onclick="toggleMenuAgregar()" style="width:34px;height:34px;min-height:auto;border-radius:50%;background:var(--primary);color:white;font-size:18px;font-weight:700;padding:0;">+</button>
+          <button onclick="toggleMenuPerfil()" class="btn-sec" style="width:auto;min-height:auto;padding:6px 10px;font-size:12px;">⚙️ Menú</button>
+        </div>
+      </div>
+      <div id="menuAgregar" class="menu-desplegable hidden" style="right:56px;top:48px;width:200px;"><div class="menu-titulo">Agregar</div><button onclick="document.getElementById('inputFoto').click();document.getElementById('menuAgregar').classList.add('hidden');">📷 Cambiar foto de perfil</button><button onclick="document.getElementById('inputFotoGaleria').click();document.getElementById('menuAgregar').classList.add('hidden');">🖼️ Agregar foto a galería</button></div>
+      <div id="menuPerfil" class="menu-desplegable hidden" style="right:16px;top:48px;"><button onclick="abrirModalEditarPerfil()">✏️ Editar perfil</button><button onclick="cambiarEstado()">🟢 Cambiar estado</button><button onclick="verStatsPerfil()">📊 Estadísticas</button><button onclick="verificarEmail()">✅ Verificar Email</button><button onclick="abrirModalBloqueados()">🚫 Bloqueados</button><button onclick="eliminarCuenta()" style="color:var(--danger);">❌ Eliminar cuenta</button><button onclick="logout()" style="color:var(--danger);">🚪 Cerrar sesión</button></div>
+      <input type="file" id="inputFoto" accept="image/*" onchange="cambiarFoto(event)" style="display:none;">
+      <input type="file" id="inputFotoGaleria" accept="image/*" multiple onchange="subirFotosGaleria(event)" style="display:none;">
+      <div id="perfilFondoContainer" style="border-radius:12px;overflow:hidden;margin-top:10px;"><div class="foto-usuario" id="fotoPerfil" onclick="abrirVisorFoto(userActual?.foto, true, 0, 'perfil')"></div></div>
+      <div style="padding:8px 0;"><h2 id="nombrePerfil"></h2><div id="etiquetasPerfil" style="margin:3px 0;"></div><div id="compatibilidadPromedio" style="margin:3px 0;"></div><p id="datosPerfil"></p><div id="estadoUsuario"></div><div id="insigniasPerfil"></div><div id="efectoActivo"></div></div>
+      <div><h3>Mis Matches (<span id="contadorMatches">0</span>)</h3><div class="lista-matches" id="listaMatchesPerfil" style="display:flex;gap:6px;overflow-x:auto;padding:6px 0;"></div></div>
+      <div><h3>Galería</h3><div id="galeriaPerfilMini" class="galeria-vertical"></div></div>
+    </div>
+  </div>
+  
+  <!-- MODALES -->
+  <div id="juegoLocalCompleto" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:200;padding:16px;"><button class="btn-sec" onclick="confirmarSalirJuego()">Volver</button><div id="contenidoJuegoLocal"></div></div>
+  <div id="areaJuegoMP" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:200;padding:16px;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div><h2 id="tituloJuegoMP">Jugando con:</h2><small id="puntosRivalesMP"></small></div><button class="btn-sec" onclick="confirmarSalirJuegoMP()">Volver</button></div><div id="estadoTurnoMP" style="text-align:center;font-size:16px;margin-bottom:4px;font-weight:bold;"></div><div class="stats-juego" id="statsJuegoMP" style="text-align:center;font-size:14px;margin-bottom:8px;color:var(--primary);"></div><div id="areaGatoMP" class="hidden"><div class="tablero-gato" id="tableroGatoMP"></div></div><div id="areaAdivinaMP" class="hidden" style="text-align:center;"><p>Adivina del 1 al 100</p><p id="pistaAdivinaMP">Esperando...</p><p>Intentos: <span id="intentosAdivinaMP">8</span>/8</p><input id="inputAdivinaMP" type="number"><button onclick="probarNumeroMP()" class="btn-primario">Probar</button></div><div id="areaAhorcadoMP" class="hidden" style="text-align:center;"><p>Intentos: <span id="intentosAhorcadoMP">6</span>/6</p><div id="palabraAhorcadoMP" style="font-size:28px;letter-spacing:8px;"></div><div id="letrasUsadasMP"></div></div><div id="areaPPTMP" class="hidden" style="text-align:center;"><p>Elige:</p><div style="display:flex;gap:12px;justify-content:center;margin:16px 0;"><button onclick="jugarPPTMP('piedra')" style="font-size:36px;">✊</button><button onclick="jugarPPTMP('papel')" style="font-size:36px;">✋</button><button onclick="jugarPPTMP('tijera')" style="font-size:36px;">✌️</button></div><p id="resultadoPPTMP"></p></div><div id="botonRevancha" class="hidden" style="text-align:center;margin-top:12px;"><button onclick="solicitarRevancha()" class="btn-sec">¿Revancha?</button></div></div>
+  <div id="perfilUsuarioOverlay" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:200;padding:16px;overflow-y:auto;"><button class="btn-sec" onclick="cerrarPerfilUsuario()">Volver</button><div id="contenidoPerfilUsuario"></div></div>
+  
+  <!-- VISOR DE FOTOS -->
+  <div id="visorFotoOverlay" class="hidden">
+    <div class="visor-header"><button onclick="cerrarVisorFoto()">← Volver</button><span id="visorContador" style="color:white;font-size:14px;"></span><button id="btnEliminarVisor" onclick="borrarFotoDesdeVisor()" style="color:#ff3b30;">🗑️</button></div>
+    <div class="visor-contenido" id="visorSlides"></div>
+    <div class="visor-footer"><button onclick="navegarVisor(-1)">⬅️</button><button onclick="navegarVisor(1)">➡️</button></div>
+  </div>
+  
+  <!-- MODAL TIENDA -->
+  <div id="modalTienda" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--modal-overlay);z-index:250;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;width:92%;max-width:420px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;"><div style="padding:14px 14px 0;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><h3 style="margin:0;">🛒 Tienda</h3><div class="puntos-en-linea" style="font-weight:700;color:var(--primary);"><span id="puntosTienda">0</span> pts</div></div><div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;"><button id="tabMarcos" class="activo" onclick="mostrarSeccionTienda('marcos')" style="flex:1;font-size:10px;padding:6px;min-height:auto;border-radius:8px;background:var(--primary);color:white;">Marcos</button><button id="tabColores" onclick="mostrarSeccionTienda('colores')" style="flex:1;font-size:10px;padding:6px;min-height:auto;border-radius:8px;">Colores</button><button id="tabRegalos" onclick="mostrarSeccionTienda('regalos')" style="flex:1;font-size:10px;padding:6px;min-height:auto;border-radius:8px;">Regalos</button><button id="tabFondos" onclick="mostrarSeccionTienda('fondos')" style="flex:1;font-size:10px;padding:6px;min-height:auto;border-radius:8px;">Fondos</button><button id="tabEfectos" onclick="mostrarSeccionTienda('efectos')" style="flex:1;font-size:10px;padding:6px;min-height:auto;border-radius:8px;">Efectos</button><button id="tabMascotas" onclick="mostrarSeccionTienda('mascotas')" style="flex:1;font-size:10px;padding:6px;min-height:auto;border-radius:8px;">Mascotas</button></div></div><div class="tienda-scroll" id="contenidoTienda" style="padding:0 14px;"></div><div style="padding:10px 14px;border-top:1px solid var(--border);"><button class="btn-sec" onclick="cerrarTienda()" style="width:100%;">Cerrar</button></div></div></div>
+  
+  <div id="bottomNav" class="bottom-nav hidden"><button onclick="mostrar('descubrir')" id="navDescubrir"><i data-feather="heart" class="icon-nav"></i>Descubrir</button><button onclick="mostrar('chats')" id="navChats"><i data-feather="message-circle" class="icon-nav"></i>Chats<span id="badgeNavChats" class="badge-nav hidden">0</span></button><button onclick="mostrar('juegos')" id="navJuegos"><i data-feather="grid" class="icon-nav"></i>Juegos</button><button onclick="mostrar('perfil')" id="navPerfil"><i data-feather="user" class="icon-nav"></i>Perfil</button></div>
+  <div id="modalConfirmacion" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);padding:20px;border-radius:12px;text-align:center;"><p id="textoConfirmacion"></p><button class="btn-aceptar" onclick="confirmarAccion()">Sí</button><button class="btn-sec" onclick="cancelarAccion()">Cancelar</button></div></div>
+  <div id="modalMensajeLike" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);padding:18px;border-radius:12px;width:90%;"><p>Mensaje con like a <span id="nombreLikeMensaje"></span>:</p><textarea id="mensajeLike" placeholder="¡Hola!"></textarea><button onclick="enviarLikeConMensaje()" class="btn-primario">Enviar Like</button><button class="btn-sec" onclick="cerrarModalMensaje()">Solo Like</button><button class="btn-superlike" onclick="enviarSuperLike()">⭐ Super Like (50pts)</button></div></div>
+  <div id="modalFiltros" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);padding:18px;border-radius:12px;width:90%;max-height:80vh;overflow-y:auto;"><h3>Filtrar</h3><select id="filtroGenero"><option value="">Todos</option><option>Hombre</option><option>Mujer</option><option>Otro</option></select><input id="filtroEdadMin" placeholder="Edad mínima"><input id="filtroEdadMax" placeholder="Edad máxima"><input id="filtroDistancia" placeholder="Distancia máxima (km)"><select id="filtroVerificacion"><option value="">Verificación</option><option value="email">Email verificado</option></select><input id="filtroPuntosMin" placeholder="Puntos mínimos"><button class="btn-primario" onclick="aplicarFiltros()">Aplicar</button><button class="btn-sec" onclick="cerrarModalFiltros()">Cancelar</button><button class="btn-eliminar" onclick="limpiarFiltros()">Limpiar filtros</button></div></div>
+  <div id="modalBloqueados" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;"><h3>Bloqueados</h3><div id="listaBloqueados"></div><button class="btn-sec" onclick="cerrarModalBloqueados()">Cerrar</button></div></div>
+  <div id="modalEstado" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;"><h3>Estado</h3><select id="selectEstado"><option value="online">🟢 En línea</option><option value="ausente">🟠 Ausente</option><option value="ocupado">🔴 Ocupado</option><option value="invisible">⚫ Invisible</option></select><button class="btn-primario" onclick="guardarEstado()">Guardar</button><button class="btn-sec" onclick="cerrarModalEstado()">Cancelar</button></div></div>
+  <div id="modalEncuesta" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;"><h3>Crear Encuesta</h3><input id="encuestaPregunta" placeholder="Pregunta"><input id="encuestaOpc1" placeholder="Opción 1"><input id="encuestaOpc2" placeholder="Opción 2"><input id="encuestaOpc3" placeholder="Opción 3 (opcional)"><button class="btn-primario" onclick="enviarEncuesta()">Enviar Encuesta</button><button class="btn-sec" onclick="cerrarModalEncuesta()">Cancelar</button></div></div>
+  <div id="modalQuienLike" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;max-height:70vh;overflow-y:auto;"><h3>👁️ Personas que te dieron like</h3><div id="listaQuienLike"></div><button class="btn-sec" onclick="cerrarModalQuienLike()">Cerrar</button></div></div>
+  <div id="modalStatsChat" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;max-height:70vh;overflow-y:auto;"><h3>📊 Estadísticas del chat</h3><div id="contenidoStatsChat"></div><button class="btn-sec" onclick="cerrarModalStatsChat()" style="margin-top:10px;">Cerrar</button></div></div>
+  <div id="modalGaleriaChat" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;max-height:70vh;overflow-y:auto;"><h3>🖼️ Fotos compartidas</h3><div class="galeria-chat-grid" id="contenidoGaleriaChat" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;"></div><button class="btn-sec" onclick="cerrarModalGaleriaChat()" style="margin-top:10px;">Cerrar</button></div></div>
+  <div id="modalEtiquetas" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;max-height:70vh;overflow-y:auto;"><h3>🏷️ Mis Etiquetas</h3><p style="font-size:11px;color:var(--text-secondary);">Selecciona hasta 5</p><div id="listaEtiquetas" style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;"></div><p>Seleccionadas: <span id="contadorEtiquetas">0</span>/5</p><button class="btn-primario" onclick="guardarEtiquetas()">Guardar</button><button class="btn-sec" onclick="cerrarModalEtiquetas()">Cancelar</button></div></div>
+  <div id="modalIntereses" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;max-height:70vh;overflow-y:auto;"><h3>🎯 Intereses</h3><div id="listaInteresesIconos" style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;"></div><button class="btn-primario" onclick="guardarIntereses()">Guardar</button><button class="btn-sec" onclick="cerrarModalIntereses()">Cancelar</button></div></div>
+  <div id="modalPreguntas" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;max-height:70vh;overflow-y:auto;"><h3>❓ Preguntas de Personalidad</h3><div id="listaPreguntas"></div><button class="btn-primario" onclick="guardarPreguntas()">Guardar</button><button class="btn-sec" onclick="cerrarModalPreguntas()">Cancelar</button></div></div>
+  <div id="modalStatsPerfil" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;max-height:70vh;overflow-y:auto;"><h3>📊 Mis Estadísticas</h3><div id="contenidoStatsPerfil"></div><button class="btn-sec" onclick="cerrarModalStatsPerfil()" style="margin-top:10px;">Cerrar</button></div></div>
+  <div id="modalCodigoVerificacion" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:260;display:flex;align-items:center;justify-content:center;"><div style="background:var(--card-bg);border-radius:12px;padding:14px;width:90%;max-width:340px;text-align:center;"><h3>✅ Verificar Email</h3><p style="margin:10px 0;">Ingresa el código de 6 dígitos</p><input id="codigoVerificacion" type="text" maxlength="6" placeholder="000000" style="text-align:center;font-size:22px;letter-spacing:6px;font-weight:700;"><button class="btn-primario" onclick="verificarCodigo()" style="margin-top:10px;">Verificar</button><button class="btn-sec" onclick="cerrarModalCodigo()">Cancelar</button><button class="btn-sec" onclick="reenviarCodigo()" style="font-size:11px;margin-top:3px;">📧 Reenviar código</button></div></div>
+  <div id="modalEditarPerfil" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:260;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--card-bg);border-bottom:1px solid var(--border);"><h3 style="margin:0;">✏️ Editar Perfil</h3><button onclick="cerrarModalEditarPerfil()" style="width:34px;height:34px;min-height:auto;border-radius:50%;font-size:16px;">✕</button></div>
+    <div style="flex:1;overflow-y:auto;padding:14px;">
+      <p style="font-weight:600;margin-bottom:4px;">📷 Foto de perfil</p><button onclick="document.getElementById('inputFoto').click()" class="btn-sec" style="width:100%;">Cambiar foto de perfil</button>
+      <p style="font-weight:600;margin:14px 0 4px;">🖼️ Galería</p><button onclick="document.getElementById('inputFotoGaleria').click()" class="btn-sec" style="width:100%;">Agregar fotos a galería</button><div id="galeriaEditarMini" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;"></div>
+      <hr style="margin:14px 0;border-color:var(--border);">
+      <p style="font-weight:600;margin-bottom:4px;">👤 Datos básicos</p><input id="editEdadModal" placeholder="Edad"><select id="editGeneroModal"><option>Hombre</option><option>Mujer</option><option>Otro</option></select><input id="editCiudadModal" placeholder="Ciudad"><textarea id="editBioModal" placeholder="Bio" rows="2"></textarea><input id="editInteresesModal" placeholder="Intereses (separados por coma)">
+      <hr style="margin:14px 0;border-color:var(--border);">
+      <p style="font-weight:600;margin-bottom:4px;">🏷️ Etiquetas (máx 5)</p><div id="etiquetasEditar" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;"></div><select id="selectEtiqueta" onchange="agregarEtiquetaDesdeSelect()" style="margin:0;"><option value="">+ Agregar etiqueta</option></select>
+      <hr style="margin:14px 0;border-color:var(--border);">
+      <p style="font-weight:600;margin-bottom:4px;">🎯 Intereses</p><div id="interesesEditar" style="display:flex;flex-wrap:wrap;gap:3px;"></div>
+      <hr style="margin:14px 0;border-color:var(--border);">
+      <p style="font-weight:600;margin-bottom:4px;">❓ Preguntas</p><div id="preguntasEditar"></div>
+    </div>
+    <div style="display:flex;gap:8px;padding:14px;background:var(--card-bg);border-top:1px solid var(--border);"><button onclick="guardarTodoPerfil()" class="btn-primario" style="flex:1;">💾 Guardar cambios</button><button onclick="cerrarModalEditarPerfil()" class="btn-sec" style="flex:1;">Cancelar</button></div>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="js/config.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/utilidades.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/descubrir.js"></script>
+<script src="js/chats.js"></script>
+<script src="js/juegos.js"></script>
+<script src="js/minijuegos.js"></script>
+<script src="js/perfil.js"></script>
+<script src="js/tienda.js"></script>
+<script src="js/multijugador.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
