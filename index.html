@@ -1012,21 +1012,63 @@ window.registrar = async function() {
   }
 };
 
-window.login=async function(){
-  if(!isOnline)return mostrarToast('Sin conexión','error');
-  const u=document.getElementById('logUser').value.trim(),p=document.getElementById('logPass').value;if(!u||!p)return mostrarToast('Ingresa usuario y contraseña','warning');
-  try{await cargarTodosUsuarios();const uf=usuarios.find(x=>x.user===u||x.email===u);if(!uf)return mostrarToast('Usuario no encontrado','error');const cred=await signInWithEmailAndPassword(auth,uf.email,p);const ds=await getDoc(doc(db,"usuarios",cred.user.uid));if(ds.exists()){userActual=ds.data();window.userActual=userActual;userActual.conectado=true;userActual.estado=userActual.estado||'online';if(userActual.chatsNoLeidos)chatsNoLeidos=userActual.chatsNoLeidos;if(userActual.chatsFijados)chatsFijados=userActual.chatsFijados||[];if(!userActual.encuestas)userActual.encuestas={};if(!userActual.etiquetas)userActual.etiquetas=[];if(!userActual.preguntas)userActual.preguntas={};if(!userActual.xp)userActual.xp=0;if(!userActual.rachaVictorias)userActual.rachaVictorias={};if(!userActual.minijuegosRestantes)userActual.minijuegosRestantes=2;if(!userActual.ultimaDesconexion)userActual.ultimaDesconexion='';if(userActual.rachaVictorias)rachaVictorias=userActual.rachaVictorias;if(!userActual.codigoVerificacion)userActual.codigoVerificacion=Math.floor(100000+Math.random()*900000).toString();await setDoc(doc(db,"usuarios",cred.user.uid),{conectado:true},{merge:true});localStorage.setItem('mg_uid',userActual.uid);if(userActual.modoOscuro)document.body.classList.add('dark-mode');obtenerUbicacion();verificarRacha();actualizarMascota();iniciarPullToRefresh();mostrarPagina('app');actualizarUI();mostrar('descubrir');mostrarToast('¡Bienvenido!','success');}else{await signOut(auth);mostrarToast('Perfil no encontrado','error');}}catch(err){if(err.code==='auth/invalid-credential'||err.code==='auth/wrong-password')mostrarToast('Usuario o contraseña incorrectos','error');else mostrarToast('Error al iniciar sesión','error');}
+window.login = async function() {
+  if (!isOnline) return mostrarToast('Sin conexión', 'error');
+  const u = document.getElementById('logUser').value.trim();
+  const p = document.getElementById('logPass').value;
+  if (!u || !p) return mostrarToast('Ingresa usuario y contraseña', 'warning');
+  
+  try {
+    await cargarTodosUsuarios();
+    const uf = usuarios.find(x => x.user === u || x.email === u);
+    if (!uf) return mostrarToast('Usuario no encontrado', 'error');
+    
+    mostrarToast('Verificando...', 'info');
+    const cred = await signInWithEmailAndPassword(auth, uf.email, p);
+    
+    mostrarToast('Cargando perfil...', 'info');
+    const ds = await getDoc(doc(db, "usuarios", cred.user.uid));
+    
+    if (ds.exists()) {
+      userActual = ds.data();
+      window.userActual = userActual;
+      userActual.conectado = true;
+      userActual.estado = userActual.estado || 'online';
+      
+      if (userActual.chatsNoLeidos) chatsNoLeidos = userActual.chatsNoLeidos;
+      if (userActual.chatsFijados) chatsFijados = userActual.chatsFijados || [];
+      if (!userActual.encuestas) userActual.encuestas = {};
+      if (!userActual.etiquetas) userActual.etiquetas = [];
+      if (!userActual.preguntas) userActual.preguntas = {};
+      if (!userActual.xp) userActual.xp = 0;
+      if (!userActual.rachaVictorias) userActual.rachaVictorias = {};
+      if (!userActual.minijuegosRestantes) userActual.minijuegosRestantes = 2;
+      if (!userActual.ultimaDesconexion) userActual.ultimaDesconexion = '';
+      if (userActual.rachaVictorias) rachaVictorias = userActual.rachaVictorias;
+      if (!userActual.codigoVerificacion) userActual.codigoVerificacion = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      await setDoc(doc(db, "usuarios", cred.user.uid), { conectado: true }, { merge: true });
+      localStorage.setItem('mg_uid', userActual.uid);
+      
+      if (userActual.modoOscuro) document.body.classList.add('dark-mode');
+      obtenerUbicacion();
+      verificarRacha();
+      actualizarMascota();
+      iniciarPullToRefresh();
+      mostrarPagina('app');
+      actualizarUI();
+      mostrar('descubrir');
+      mostrarToast('¡Bienvenido!', 'success');
+    } else {
+      await signOut(auth);
+      mostrarToast('Perfil no encontrado en la base de datos', 'error');
+    }
+  } catch (err) {
+    console.log('ERROR COMPLETO:', JSON.stringify(err));
+    // Mostrar el mensaje exacto del error
+    mostrarToast('Error: ' + (err.message || err.code || 'desconocido'), 'error');
+  }
 };
-
-window.recuperarContrasena=async function(){const email=document.getElementById('recupEmail').value.trim();if(!email)return mostrarToast('Ingresa tu email','warning');try{await sendPasswordResetEmail(auth,email);mostrarToast('Instrucciones enviadas a tu email','success');mostrarPagina('login');}catch(err){mostrarToast('Error: '+err.message,'error');}};
-
-window.verificarEmail=async function(){document.getElementById('menuPerfil')?.classList.add('hidden');document.getElementById('modalCodigoVerificacion').classList.remove('hidden');};
-window.verificarCodigo=async function(){const codigo=document.getElementById('codigoVerificacion').value.trim();if(!codigo||codigo.length!==6)return mostrarToast('Ingresa 6 dígitos','warning');if(!userActual)return;if(codigo===userActual.codigoVerificacion){userActual.emailVerificado=true;userActual.puntos+=50;await guardarTodo();document.getElementById('modalCodigoVerificacion').classList.add('hidden');cargarPerfil();incrementarMision('verificar');mostrarToast('✅ Email verificado! +50 puntos','success');}else{mostrarToast('❌ Código incorrecto','error');}};
-window.reenviarCodigo=async function(){if(!userActual)return;codigoVerificacionActual=Math.floor(100000+Math.random()*900000).toString();userActual.codigoVerificacion=codigoVerificacionActual;await guardarTodo();mostrarToast(`Nuevo código: ${codigoVerificacionActual}`,'info');};
-window.cerrarModalCodigo=function(){document.getElementById('modalCodigoVerificacion').classList.add('hidden');};
-
-window.logout=async function(){if(userActual){userActual.conectado=false;userActual.ultimaDesconexion=new Date().toISOString();userActual.chatsNoLeidos=chatsNoLeidos;userActual.chatsFijados=chatsFijados;await guardarTodo();}await signOut(auth);userActual=null;window.userActual=null;localStorage.removeItem('mg_uid');document.getElementById('mascotaVirtual').classList.add('hidden');mostrarPagina('login');};
-
 // PUNTOS DESDE FIRESTORE
 window.actualizarUI=async function(){if(!userActual)return;try{const ds=await getDoc(doc(db,"usuarios",userActual.uid));if(ds.exists()){userActual.puntos=ds.data().puntos||0;userActual.xp=ds.data().xp||0;}}catch(e){}document.getElementById('puntosUser').innerText=userActual.puntos;document.getElementById('puntosTienda').innerText=userActual.puntos;await cargarTodosUsuarios();actualizarBadgeSolicitudes();actualizarBadgeChats();actualizarNivelUI();};
 
